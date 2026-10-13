@@ -1,4 +1,5 @@
 import { tableToCsv, type ParsedTable } from './csv'
+import { computeFacts, factsBlock } from './facts'
 import { SPEC_JSON_SHAPE, type ChartSpec } from './schema'
 
 function columnGuide(table: ParsedTable): string {
@@ -19,6 +20,10 @@ export function specPrompt(table: ParsedTable, userRequest: string): string {
     rows: table.rows.slice(0, 20),
   })
   const request = userRequest.trim() || 'Choose the simplest chart that makes the table readable.'
+  const facts = computeFacts(table)
+  const factsText = facts
+    ? `\n\nFacts computed on device (ground truth, do not recompute):\n${factsBlock(facts)}`
+    : ''
   return `You convert tables into a chart specification. Reply with a single JSON object. No markdown, no commentary.
 
 Schema:
@@ -27,7 +32,8 @@ ${SPEC_JSON_SHAPE}
 Rules:
 - Use only these column names: ${table.columns.map((c) => c.name).join(', ')}
 - Do not invent rows or change numbers.
-- insight must mention a concrete number from the sample.
+- insight must use ONLY the computed facts below (series names, periods, numbers). Never contradict them.
+- Include every numeric column in y (as an array) unless the user request asks for specific columns.
 - Prefer line for dates, pie/donut only for a short mix, scatter only for two numbers with no useful labels.
 
 Example:
@@ -40,7 +46,7 @@ Columns:
 ${columnGuide(table)}
 
 Sample rows (CSV, may be truncated):
-${sample}`
+${sample}${factsText}`
 }
 
 export function repairPrompt(errorMessage: string): string {
@@ -59,7 +65,11 @@ Columns (only these exist): ${table.columns.map((c) => `${c.name}:${c.kind}`).jo
 Instruction:
 ${instruction.trim()}
 
-Keep numbers on the original table. Do not add rows.`
+Keep numbers on the original table. Do not add rows. Keep the insight consistent with these facts:
+${(() => {
+  const facts = computeFacts(table)
+  return facts ? factsBlock(facts) : '(none)'
+})()}`
 }
 
 export function proseBundlePrompt(request: string): string {

@@ -110,7 +110,7 @@ export function Studio() {
             setAttempts(result.attempts)
             setNote({
               kind: 'ok',
-              text: `${engine === 'webllm' ? modelId : ollamaModel} · ${result.attempts} attempt${result.attempts === 1 ? '' : 's'} · columns left on device`,
+              text: `${engine === 'webllm' ? modelId : ollamaModel} · ${result.attempts} attempt${result.attempts === 1 ? '' : 's'} · columns left on device${factsNote(result.factsOverride)}`,
             })
             return
           } catch (error) {
@@ -142,7 +142,7 @@ export function Studio() {
           setAttempts(result.attempts)
           setNote({
             kind: 'ok',
-            text: `Prose → table from ${engine === 'webllm' ? 'Gemma' : 'Ollama'} · ${result.attempts} attempt${result.attempts === 1 ? '' : 's'}`,
+            text: `Prose → table from ${engine === 'webllm' ? 'Gemma' : 'Ollama'} · ${result.attempts} attempt${result.attempts === 1 ? '' : 's'}${factsNote(result.factsOverride)}`,
           })
           return
         } catch (error) {
@@ -196,7 +196,7 @@ export function Studio() {
         const result = await specFromFollowup(table, spec, instruction, complete)
         setSpec(result.spec)
         setAttempts(result.attempts)
-        setNote({ kind: 'ok', text: `Follow-up applied in ${result.attempts} attempt${result.attempts === 1 ? '' : 's'}.` })
+        setNote({ kind: 'ok', text: `Follow-up applied in ${result.attempts} attempt${result.attempts === 1 ? '' : 's'}${factsNote(result.factsOverride)}.` })
         setFollowup('')
       } catch (error) {
         const next = applyFollowup(table, spec, instruction)
@@ -580,4 +580,10 @@ export function Studio() {
       </div>
     </div>
   )
+}
+
+function factsNote(override: string | null): string {
+  return override
+    ? ` · facts checked on device (model insight replaced: ${override})`
+    : ' · facts checked on device'
 }

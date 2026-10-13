@@ -2,6 +2,7 @@ import { bindSpec, parseAndBind, SpecBindError } from './bindSpec'
 import { tableFromMatrix, type ParsedTable } from './csv'
 import { extractJson } from './extractJson'
 import { withGroundedInsight } from './heuristic'
+import { groundSpec } from './facts'
 import { followupPrompt, proseBundlePrompt, repairPrompt, specPrompt } from './prompt'
 import {
   ChartSpecSchema,
@@ -18,6 +19,8 @@ export type ModelResult = {
   table: ParsedTable
   attempts: number
   raw: string
+  /** Why the model insight was replaced by a fact-based one, or null if it held up. */
+  factsOverride: string | null
 }
 
 async function completeWithRepair(
@@ -53,7 +56,8 @@ export async function specFromTable(
     const spec = parseAndBind(table, json)
     return withGroundedInsight(table, spec)
   })
-  return { ...result, table }
+  const grounded = groundSpec(table, result.spec, request)
+  return { ...result, spec: grounded.spec, factsOverride: grounded.overridden, table }
 }
 
 export async function specFromFollowup(
@@ -67,7 +71,8 @@ export async function specFromFollowup(
     followupPrompt(table, spec, instruction),
     (json) => withGroundedInsight(table, parseAndBind(table, json)),
   )
-  return { ...result, table }
+  const grounded = groundSpec(table, result.spec, instruction, { expandSeries: false })
+  return { ...result, spec: grounded.spec, factsOverride: grounded.overridden, table }
 }
 
 export async function bundleFromProse(request: string, complete: CompleteFn): Promise<ModelResult> {
@@ -80,10 +85,13 @@ export async function bundleFromProse(request: string, complete: CompleteFn): Pr
   })
   const bundle = GeneratedBundleSchema.parse(extractJson(result.raw))
   const body = bundle.table.rows.map((row) => bundle.table.columns.map((column) => String(row[column] ?? '')))
+  const table = tableFromMatrix(bundle.table.columns, body)
+  const grounded = groundSpec(table, result.spec, request, { expandSeries: false })
   return {
     ...result,
-    table: tableFromMatrix(bundle.table.columns, body),
-    spec: result.spec,
+    table,
+    spec: grounded.spec,
+    factsOverride: grounded.overridden,
   }
 }
 
