@@ -57,6 +57,12 @@ The screenshots below are real runs of Gemma 2 2B IT (`gemma-2-2b-it-q4f16_1-MLC
 
 ![Gemma follow-up: line chart](https://raw.githubusercontent.com/sherotree/plotkeep/main/docs/screenshots/gemma-followup.png)
 
+### What went wrong, and how I fixed it
+
+In my first round of testing, Gemma 2 2B misread the freelancer CSV. Asked "which client grew fastest?", it said "Client B grew the most, increasing from 1800 to 2600." That was wrong: client_c went from 900 to 4100, and client_b ended at 3100, not 2600. It also plotted only client_b.
+
+So Plotkeep no longer trusts the model with arithmetic. For a parsed table it now computes the stats on device, in plain code: first and last value, min and max with their labels, absolute and percent change for each series, which series grew fastest, and the best and worst period. Those facts go into the Gemma prompt as ground truth. Gemma chooses the chart type and encoding and writes the wording. Every numeric series is plotted unless you ask for specific ones. After the model replies, a check compares the insight with the computed facts. If it credits the wrong series, names the wrong peak, or quotes a number that isn't in the table or the stats, the insight is replaced with a sentence built from the facts. The status line shows "facts checked on device" either way. In the reshoot above, Gemma's grounded answer passed the check: "Client C experienced the most significant growth, with a 355.6% increase over the period."
+
 If you are on a machine without WebGPU, stay on the heuristic engine or point Ollama at `gemma2:2b`. The UI says which of those is true; it does not pretend a cloud fallback exists.
 
 ## How I built it
