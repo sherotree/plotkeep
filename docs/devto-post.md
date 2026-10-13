@@ -47,6 +47,16 @@ npm run dev
 
 Open `/studio`. The invoice sample is preloaded. **Draw chart** works with no model — that is deliberate. On this build it suggested a three-series line (`invoiced / collected / overdue by month`) and wrote “May leads invoiced at 6,100; Feb is the low at 3,100.” Load Gemma only if the browser has WebGPU and you can wait out a ~1.6 GB first fetch (cached after that). Screenshots of that flow live in [`docs/screenshots`](../docs/screenshots).
 
+The screenshots below are real runs of Gemma 2 2B IT (`gemma-2-2b-it-q4f16_1-MLC-1k`) loaded in-tab via WebLLM, in Chrome on a Mac mini.
+
+![Gemma 2 2B loaded in the tab](https://raw.githubusercontent.com/sherotree/plotkeep/main/docs/screenshots/gemma-loaded.png)
+
+![Plain-English prompt drawn by Gemma](https://raw.githubusercontent.com/sherotree/plotkeep/main/docs/screenshots/gemma-prompt-bar.png)
+
+![Freelancer CSV charted by Gemma](https://raw.githubusercontent.com/sherotree/plotkeep/main/docs/screenshots/gemma-csv.png)
+
+![Gemma follow-up: line chart](https://raw.githubusercontent.com/sherotree/plotkeep/main/docs/screenshots/gemma-followup.png)
+
 If you are on a machine without WebGPU, stay on the heuristic engine or point Ollama at `gemma2:2b`. The UI says which of those is true; it does not pretend a cloud fallback exists.
 
 ## How I built it
